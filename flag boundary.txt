@@ -1,0 +1,82 @@
+#include <GL/glut.h>
+#include <cmath>
+
+void setPixel(int x, int y, GLfloat* color) {
+    glBegin(GL_POINTS);
+    glColor3fv(color);
+    glVertex2i(x, y);
+    glEnd();
+    glFlush();
+}
+
+void boundaryFill(int x, int y, GLfloat* fillColor, GLfloat* borderColor) {
+    GLfloat currentColor[3];
+    glReadPixels(x, y, 1, 1, GL_RGB, GL_FLOAT, currentColor);
+
+    if ((currentColor[0] != borderColor[0] || currentColor[1] != borderColor[1] || currentColor[2] != borderColor[2]) &&
+        (currentColor[0] != fillColor[0] || currentColor[1] != fillColor[1] || currentColor[2] != fillColor[2])) {
+        setPixel(x, y, fillColor);
+        boundaryFill(x + 1, y, fillColor, borderColor);
+        boundaryFill(x - 1, y, fillColor, borderColor);
+        boundaryFill(x, y + 1, fillColor, borderColor);
+        boundaryFill(x, y - 1, fillColor, borderColor);
+    }
+}
+
+void drawBangladeshFlag() {
+    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Draw green rectangular
+    GLfloat greenColor[] = {0.0, 0.5, 0.0};  // RGB for green
+    glColor3fv(greenColor);
+    glBegin(GL_POLYGON);
+    glVertex2i(100, 100);
+    glVertex2i(400, 100);
+    glVertex2i(400, 300);
+    glVertex2i(100, 300);
+    glEnd();
+
+    // Draw red circle
+    GLfloat redColor[] = {1.0, 0.0, 0.0};  // RGB for red
+    GLfloat borderColor[] = {0.0, 0.5, 0.0};  // RGB for green (border color)
+    int radius = 50;
+    int centerX = 250;
+    int centerY = 200;
+
+    glColor3fv(redColor);
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < 360; i++) {
+        float theta = i * 3.14159265 / 180;
+        glVertex2i(centerX + radius * cos(theta), centerY + radius * sin(theta));
+    }
+    glEnd();
+
+    // Boundary fill the red circle
+    boundaryFill(centerX, centerY, redColor, borderColor);
+}
+
+void display() {
+    drawBangladeshFlag();
+    glFlush();
+}
+
+void reshape(int w, int h) {
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0.0, (GLdouble)w, 0.0, (GLdouble)h);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(500, 400);
+    glutCreateWindow("Bangladesh Flag");
+    glutDisplayFunc(display);
+    glutReshapeFunc(reshape);
+    glutMainLoop();
+    return 0;
+}
